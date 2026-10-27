@@ -1,3 +1,4 @@
+# src/primitive_db/utils.py
 import json
 
 def load_metadata(filepath):
@@ -8,7 +9,5 @@ def load_metadata(filepath):
         return {}
 
 def save_metadata(filepath, data):
-    try:
-        with open(filepath, 'w') as db:
-            json.dump(data, f, ensure_ascii=False, indent=2)
-        
+    with open(filepath, 'w') as db:
+        json.dump(data, db, ensure_ascii=False, indent=2)

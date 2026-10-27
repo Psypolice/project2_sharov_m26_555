@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
+# src/primitive_db/main.py
+from primitive_db.engine import run
 
-from primitive_db.engine import welcome
 
-
-def main():
-    welcome()
+def main() -> None:
+    """Точка входа в приложение."""
+    run()
 
 
 if __name__ == "__main__":

@@ -1,3 +1,4 @@
+# src/primitive_db/core.py
 def _parse_column(column_str):
     if ":" not in column_str:
         return None
@@ -29,3 +30,16 @@ def create_table(metadata, table_name, columns):
 
     columns_str = ", ".join(f"{k}:{v}" for k, v in parsed.items())
     return True, f'Таблица "{table_name}" успешно создана со столбцами: {columns_str}'
+
+
+def drop_table(metadata, table_name):
+    if table_name not in metadata:
+        return False, f'Ошибка: Таблица "{table_name}" не существует.'
+    del metadata[table_name]
+    return True, f'Таблица "{table_name}" успешно удалена.'
+
+
+def list_tables(metadata: dict) -> str:
+    if not metadata:
+        return "Таблицы не найдены."
+    return "\n".join(f"- {name}" for name in metadata)
