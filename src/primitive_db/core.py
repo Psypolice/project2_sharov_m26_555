@@ -17,14 +17,18 @@ def create_table(metadata, table_name, columns):
         return False, f'Ошибка: Таблица "{table_name}" уже существует.'
 
     parsed = {}
+    has_id = False
     for col in columns:
         parsed_col = _parse_column(col)
         if parsed_col is None:
             return False, f'Некорректное занчение {col}. Попробуйте снова'
         name, col_type = parsed_col
+        if name == "ID":
+            has_id = True
         parsed[name] = col_type
 
-    parsed = {"ID": "int", **parsed}
+    if not has_id:
+        parsed = {"ID": "int", **parsed}
 
     metadata[table_name] = parsed
 

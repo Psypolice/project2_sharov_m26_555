@@ -1,5 +1,4 @@
 # src/primitive_db/engine.py
-from importlib import metadata
 import os
 import shlex
 
@@ -33,6 +32,7 @@ def print_welcome() -> None:
 def run():
     print_welcome()
 
+    metadata = load_metadata(DATA_FILE)
     while True:
         user_input = prompt.string("Введите команду: ").strip()
         if not user_input:
@@ -77,9 +77,9 @@ def run():
             continue
 
         if command == "drop_table":
-            if len(args) < 3:
+            if len(args) != 2:
                 print(
-                    "Некорректное значение. Требуется имя таблицы."
+                    "Некорректное значение. Требуется имя таблицы. "
                     "Попробуйте снова."
                 )
                 continue
