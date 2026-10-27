@@ -25,3 +25,5 @@
 
 ### Пример сессии
 
+[Ссылка на видео](https://disk.yandex.ru/i/3Wjgpi0lnZ0urA)
+
