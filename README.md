@@ -174,7 +174,7 @@ select from users where age = 28, is_active = true
 
 ### Установка и запуск
 ```
-git clone [<repository_url>](https://github.com/Psypolice/project2_sharov_m26_555.git)
+git clone https://github.com/Psypolice/project2_sharov_m26_555.git
 ```
 ```
 cd primitive_db
