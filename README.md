@@ -145,4 +145,5 @@ select from users where age = 28, is_active = true
 ### Пример сессии
 
 [Ссылка на видео 2 задания](https://disk.yandex.ru/i/3Wjgpi0lnZ0urA)
+[Ссылка на видео 3 задания](https://disk.yandex.ru/i/V1tKPRYV3u6odg)
 
