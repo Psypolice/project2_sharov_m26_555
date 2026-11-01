@@ -2,20 +2,25 @@
 import os
 import shlex
 
-from prettytable import PrettyTable
-from primitive_db.core import (
-    create_table, drop_table, list_tables,
-    insert, select, update, delete
-)
-from primitive_db.utils import (
-    load_metadata, save_metadata, 
-    load_table_data, save_table_data
-)
-
 import prompt
+from prettytable import PrettyTable
 
-META_FILE = os.path.join(os.getcwd(), "db_meta.json")
-FILE_DIR = os.path.join(os.getcwd(), "data")
+from primitive_db.constants import META_FILE, DATA_DIR
+from primitive_db.core import (
+    create_table, 
+    delete, drop_table,
+    insert,
+    list_tables,
+    select,
+    update
+)
+from primitive_db.decorators import create_cacher
+from primitive_db.utils import (
+    load_metadata,
+    load_table_data,
+    save_metadata,
+    save_table_data
+)
 
 def _split_values(values_str: str) -> list[str]:
     #Разбиваем строку значений '(v1, v2, "v3")' на список, учитывая кавычки.
@@ -108,7 +113,7 @@ def print_help():
     print("  list_tables - показать список всех таблиц")
     print("  drop_table <имя_таблицы> - удалить таблицу")
     print("  info <имя_таблицы> - информация о таблице")
-    print("  insert into <имя_таблицы> values (<значение1>, <значение2>, ...) - добавить запись")
+    print("  insert into <имя_таблицы> values (<значение1>, <значение2>, ...) - добавить")
     print("  select from <имя_таблицы> [where <условие>] - выбрать записи")
     print("  update <имя_таблицы> set <присваивания> where <условие> - обновить записи")
     print("  delete from <имя_таблицы> where <условие> - удалить записи")
@@ -128,6 +133,9 @@ def run():
     #Главный цикл программы
     print_welcome()
 
+    #Создаём кэш для операции select (замыкание)
+    cache_result, invalidate_cache = create_cacher()
+
     while True:
         user_input = prompt.string("Введите команду: ").strip()
         if not user_input:
@@ -142,7 +150,7 @@ def run():
         if not args:
             continue
 
-        command = args[0]
+        command = args[0].lower()
         metadata = load_metadata(META_FILE)
 
         if command == "exit":
@@ -167,7 +175,7 @@ def run():
                 continue
             schema = metadata[table_name]
             cols = ", ".join(f"{k}:{v}" for k, v in schema.items())
-            data = load_table_data(table_name, FILE_DIR)
+            data = load_table_data(table_name, DATA_DIR)
             print(f"Таблица: {table_name}")
             print(f"Столбцы: {cols}")
             print(f"Количество записей: {len(data)}")
@@ -195,29 +203,10 @@ def run():
             if success:
                 save_metadata(META_FILE, metadata)
                 #Удаляем файл данных
-                data_file = os.path.join(FILE_DIR, f"{table_name}.json")
+                data_file = os.path.join(DATA_DIR, f"{table_name}.json")
                 if os.path.exists(data_file):
                     os.remove(data_file)
-            print(message)
-            continue
-
-        if command == "insert":
-            if len(args) < 5 or args[1].lower() != "into" or args[3].lower() != "values":
-                print('Синтаксис: insert into <имя_таблицы> values (<значение1>, <значение2>, ...)')
-                continue
-            table_name = args[2]
-            if table_name not in metadata:
-                print(f'Ошибка: Таблица "{table_name}" не существует.')
-                continue
-
-            values_str = " ".join(args[4:])
-            values = _split_values(values_str)
-
-            table_data = load_table_data(table_name, FILE_DIR)
-            success, message, record, table_data = insert(metadata, table_name, table_data, values)
-
-            if success:
-                save_table_data(table_name, table_data, FILE_DIR)
+                invalidate_cache()
             print(message)
             continue
 
@@ -239,8 +228,13 @@ def run():
                     print(f"Некорректное условие: {where_str}")
                     continue
 
-            table_data = load_table_data(table_name, FILE_DIR)
-            result = select(table_data, where_clause)
+            cache_key = (table_name, tuple(sorted(where_clause.items())) if where_clause else None)
+
+            def load_and_select():
+                table_data = load_table_data(table_name, DATA_DIR)
+                return select(table_data, where_clause)
+
+            result = cache_result(cache_key, load_and_select)
             columns = list(metadata[table_name].keys())
             _print_table(result, columns)
             continue
@@ -279,9 +273,10 @@ def run():
                 print("Некорректное значение в set или where.")
                 continue
 
-            table_data = load_table_data(table_name, FILE_DIR)
+            table_data = load_table_data(table_name, DATA_DIR)
             updated_count, table_data = update(table_data, set_clause, where_clause)
-            save_table_data(table_name, table_data, FILE_DIR)
+            save_table_data(table_name, table_data, DATA_DIR)
+            invalidate_cache()
             print(f"Обновлено записей: {updated_count}.")
             continue
 
@@ -302,9 +297,10 @@ def run():
                 print(f"Некорректное условие: {where_str}")
                 continue
 
-            table_data = load_table_data(table_name, FILE_DIR)
+            table_data = load_table_data(table_name, DATA_DIR)
             deleted_count, table_data = delete(table_data, where_clause)
-            save_table_data(table_name, table_data, FILE_DIR)
+            save_table_data(table_name, table_data, DATA_DIR)
+            invalidate_cache()
             print(f"Удалено записей: {deleted_count}.")
             continue
 

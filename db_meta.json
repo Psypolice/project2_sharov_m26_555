@@ -1,17 +1,8 @@
 {
   "users": {
     "ID": "int",
-    "age": "int",
-    "pass": "bool"
-  },
-  "user": {
-    "ID": "int",
     "name": "str",
-    "age": "int"
-  },
-  "products": {
-    "ID": "int",
-    "product": "str",
-    "coast": "int"
+    "age": "int",
+    "check": "bool"
   }
 }

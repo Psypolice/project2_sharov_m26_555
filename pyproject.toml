@@ -1,7 +1,7 @@
 [project]
 name = "primitive-db"
 version = "0.1.0"
-description = "Add your description here"
+description = "Примитивная консольная база данных для управления таблицами"
 readme = "README.md"
 authors = [
     { name = "Alexey Sharov", email = "psypolice88@gmail.com" }
